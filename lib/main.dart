@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
-//import 'fill_business_info.dart'; // ✅ make sure this file exists
+import 'pages/homeone_page.dart'; // ✅ make sure this file exists
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,60 +55,61 @@ class _LoginPageState extends State<LoginPage> {
   bool _agree = false;
   bool _isLoading = false;
 
-  Future<void> _login() async {
-    if (!_agree) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please agree first.")),
-      );
-      return;
-    }
-
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email and password are required.")),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final AuthResponse res = await supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-
-      if (res.user != null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login successful!")),
-        );
-        //Navigator.pushReplacement(
-          //context,
-          //MaterialPageRoute(
-           // builder: (context) => const FillBusinessInfoPage(),
-          //),
-        //);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Invalid credentials.")),
-        );
-      }
-    } on AuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login failed: ${e.message}")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Unexpected error: $e")),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+Future<void> _login() async {
+  if (!_agree) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please agree first.")),
+    );
+    return;
   }
+
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
+
+  if (email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Email and password are required.")),
+    );
+    return;
+  }
+
+  setState(() => _isLoading = true);
+
+  try {
+    final AuthResponse res = await supabase.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
+
+    if (res.user != null) {
+      if (!mounted) return;
+
+      // ✅ Redirect to your home page (ActivateQuickcartPage)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ActivateQuickcartPage(),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid credentials.")),
+      );
+    }
+  } on AuthException catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Login failed: ${e.message}")),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Unexpected error: $e")),
+    );
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
+  }
+}
+
+  
 
   @override
   Widget build(BuildContext context) {
