@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'pages/homeone_page.dart'; // ❌ Not needed unless used
 
 void main() {
   runApp(const MyApp());
@@ -38,7 +39,6 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Logo with fallback
                 Image.asset(
                   "assets/img/logo.png",
                   height: 120,
@@ -50,10 +50,8 @@ class _LoginPageState extends State<LoginPage> {
                     );
                   },
                 ),
-
                 const SizedBox(height: 24),
 
-                // Email Field
                 TextField(
                   decoration: InputDecoration(
                     labelText: "Email Address",
@@ -62,10 +60,8 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 18),
 
-                // Password Field
                 TextField(
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
@@ -75,7 +71,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                       ),
                       onPressed: () {
                         setState(() {
@@ -85,7 +83,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 10),
 
                 Align(
@@ -96,7 +93,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                // Checkbox Agreement with clickable links
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -126,11 +122,12 @@ class _LoginPageState extends State<LoginPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => const UserAgreementPage()),
+                                        builder: (context) =>
+                                            const UserAgreementPage()),
                                   );
                                 },
                             ),
-                            const TextSpan(text: " and ", style: TextStyle(color: Colors.black)),
+                            const TextSpan(text: " and "),
                             TextSpan(
                               text: "Privacy Policy",
                               style: const TextStyle(
@@ -143,7 +140,8 @@ class _LoginPageState extends State<LoginPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => const PrivacyPolicyPage()),
+                                        builder: (context) =>
+                                            const PrivacyPolicyPage()),
                                   );
                                 },
                             ),
@@ -156,7 +154,6 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 16),
 
-                // Sign In Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -174,9 +171,24 @@ class _LoginPageState extends State<LoginPage> {
                         return;
                       }
 
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const TestHomePage()),
+                        PageRouteBuilder(
+                          transitionDuration: const Duration(milliseconds: 500),
+                          pageBuilder: (_, __, ___) =>
+                              const ActivateQuickcartPage(), // ✅ Navigate correctly
+                          transitionsBuilder: (_, animation, __, child) {
+                            const begin = Offset(1.0, 0.0);
+                            const end = Offset.zero;
+                            const curve = Curves.easeInOut;
+                            var tween = Tween(begin: begin, end: end)
+                                .chain(CurveTween(curve: curve));
+                            return SlideTransition(
+                              position: animation.drive(tween),
+                              child: child,
+                            );
+                          },
+                        ),
                       );
                     },
                     child: const Text("Sign in"),
@@ -185,10 +197,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 20),
                 const Text("Other ways to sign in"),
-
                 const SizedBox(height: 16),
-
-                // Google & Facebook Icon Buttons (mock)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
@@ -205,20 +214,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-
-
-class TestHomePage extends StatelessWidget {
-  const TestHomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Welcome!")),
-      body: const Center(child: Text("Login UI is working ")),
-    );
-  }
-}
-
 
 class UserAgreementPage extends StatelessWidget {
   const UserAgreementPage({super.key});
@@ -240,7 +235,6 @@ class UserAgreementPage extends StatelessWidget {
   }
 }
 
-// Privacy Policy Page
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});
 
