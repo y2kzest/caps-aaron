@@ -1,8 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
-import 'pages/homeone_page.dart'; // ❌ Not needed unless used
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:supabase_flutter/supabase_flutter.dart';
+//import 'fill_business_info.dart'; // ✅ make sure this file exists
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (kIsWeb) {
+    // ✅ For web builds: use hardcoded keys
+    await Supabase.initialize(
+      url: 'https://mnnnmdlvjvwyxhadeinc.supabase.co',
+      anonKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ubm5tZGx2anZ3eXhoYWRlaW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5NzI1NTksImV4cCI6MjA3ODU0ODU1OX0.NxQDcEBhw4XrFbjKeiYQFtN9pvEuLOAi4XiHmzxcKgw',
+    );
+  } else {
+    // ✅ For mobile or desktop: use .env
+    await dotenv.load(fileName: ".env");
+
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL']!,
+      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    );
+  }
+
   runApp(const MyApp());
 }
 
@@ -11,9 +32,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const LoginPage(),
+      home: LoginPage(),
     );
   }
 }
@@ -26,8 +47,68 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final supabase = Supabase.instance.client;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   bool _obscurePassword = true;
   bool _agree = false;
+  bool _isLoading = false;
+
+  Future<void> _login() async {
+    if (!_agree) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please agree first.")),
+      );
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Email and password are required.")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final AuthResponse res = await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (res.user != null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login successful!")),
+        );
+        //Navigator.pushReplacement(
+          //context,
+          //MaterialPageRoute(
+           // builder: (context) => const FillBusinessInfoPage(),
+          //),
+        //);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid credentials.")),
+        );
+      }
+    } on AuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Login failed: ${e.message}")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Unexpected error: $e")),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +133,9 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 24),
 
+                // Email
                 TextField(
+                  controller: _emailController,
                   decoration: InputDecoration(
                     labelText: "Email Address",
                     border: OutlineInputBorder(
@@ -62,7 +145,9 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 18),
 
+                // Password
                 TextField(
+                  controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: "Password",
@@ -105,48 +190,37 @@ class _LoginPageState extends State<LoginPage> {
                       },
                     ),
                     Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          text: "I've read and agreed to ",
-                          style: const TextStyle(color: Colors.black, height: 1.3),
-                          children: [
-                            TextSpan(
-                              text: "User Agreement",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                                decoration: TextDecoration.underline,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const UserAgreementPage()),
-                                  );
-                                },
-                            ),
-                            const TextSpan(text: " and "),
-                            TextSpan(
-                              text: "Privacy Policy",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                                decoration: TextDecoration.underline,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const PrivacyPolicyPage()),
-                                  );
-                                },
-                            ),
-                          ],
-                        ),
+                      child: Wrap(
+                        children: [
+                          const Text("I've read and agreed to "),
+                          TextButton(
+                            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const UserAgreementPage(),
+                                ),
+                              );
+                            },
+                            child: const Text("User Agreement"),
+                          ),
+                          const Text(" and "),
+                          TextButton(
+                            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const PrivacyPolicyPage(),
+                                ),
+                              );
+                            },
+                            child: const Text("Privacy Policy"),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -163,35 +237,17 @@ class _LoginPageState extends State<LoginPage> {
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
-                    onPressed: () {
-                      if (!_agree) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Please agree first.")),
-                        );
-                        return;
-                      }
-
-                      Navigator.pushReplacement(
-                        context,
-                        PageRouteBuilder(
-                          transitionDuration: const Duration(milliseconds: 500),
-                          pageBuilder: (_, __, ___) =>
-                              const ActivateQuickcartPage(), // ✅ Navigate correctly
-                          transitionsBuilder: (_, animation, __, child) {
-                            const begin = Offset(1.0, 0.0);
-                            const end = Offset.zero;
-                            const curve = Curves.easeInOut;
-                            var tween = Tween(begin: begin, end: end)
-                                .chain(CurveTween(curve: curve));
-                            return SlideTransition(
-                              position: animation.drive(tween),
-                              child: child,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    child: const Text("Sign in"),
+                    onPressed: _isLoading ? null : _login,
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text("Sign in"),
                   ),
                 ),
 
