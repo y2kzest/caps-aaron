@@ -46,13 +46,7 @@ class InventoryManagementScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              // 'Inventory' text (top left in the original image context)
-              const Text(
-                'Inventory',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black54),
-              ),
-              const SizedBox(height: 16),
-              
+
               // --- Header Section: Inventory Management ---
               Row(
                 children: <Widget>[
