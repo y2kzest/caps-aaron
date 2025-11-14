@@ -5,13 +5,20 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.8.1
+  # Using the recommended range format
+  sdk: '>=3.8.1 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
+  
+  # Core App Dependencies
   flutter_dotenv: ^6.0.0
   supabase_flutter: ^2.10.3
+  
+  # Moved here from dev_dependencies: These are required for runtime functionality (file picking, path resolution)
+  file_picker: ^6.1.1
+  path: ^1.8.3
 
 dev_dependencies:
   flutter_test:
